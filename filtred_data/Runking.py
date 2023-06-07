@@ -2,10 +2,24 @@ from tkinter import *
 from tkinter import filedialog 
 import json
 import re
+import os , shutil
+import pandas 
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import ttk
 
 def Convert():
-    pass
-
+    if filename != "" :
+        desktop = os.path.normpath(os.path.expanduser("~/Desktop"))
+        # print(desktop)
+        df_json = pandas.read_json("file22.json" ,orient='index')
+        # df_json = pandas.DataFrame.from_dict(data)
+        if os.path.exists("Domain.xlsx"):
+            os.remove("Domain.xlsx")
+            df_json.to_excel("Domain.xlsx")
+            shutil.copy2(os.getcwd()+"\\"+"Domain.xlsx", desktop)
+            tk.messagebox.showinfo('Return','File is done')
+            
 window = Tk()
 window.geometry("862x519")
 window.title("RUNKING")
@@ -62,7 +76,10 @@ entry0 = Entry(
     bg = "#f1f5ff",
     highlightthickness = 0)
 
+data = {}
 def file():
+    global data
+    global filename
     filename = filedialog.askopenfilename()
     if filename:
         entry0.place(
@@ -71,62 +88,21 @@ def file():
             height = 59)
         entry0.insert(0,filename)
         file_txt = str(filename)
-        data1 = []
-        data2 = [] 
-        file1 = "file22.json"
         with open(file_txt) as f:
             lines = f.readlines()
-        # python_dict = {"dmain": lines} 
-        # json_obj = json.dumps(python_dict)
-        print(lines)
-        for i in lines:
-            domain = re.search("@[\w.]+", i)
-            # print(domain.group())
-            
-        for x in lines:
-                if domain.group() in x:
-                    data1.append(lines)
-        print(data1)
+        for line in lines :
+            index = line.index("@")
+            acc = line[index:len(line)-1]
+            if acc not in data:
+                data[acc] = [line]
+            else :
+                data[acc].append(line)
+        #-------------------------------------------------
+        jsonString = json.dumps(data)
+        jsonFile = open("file22.json", "w")
+        jsonFile.write(jsonString)
+        jsonFile.close()
         
-            
-            
-            
-            
-        
-               
-            
-            
-
-            
-            
-            
-                    
-           
-            
-                
-                    
-
-            
-                     
-                 
-                   
-            
-                
-                
-            
-               
-                
-                
-            
-                
-                
-                         
-            
-
-     
-            
-
-
 img1 = PhotoImage(file = f"images/img1.png")
 b1 = Button(
     image = img1,
@@ -134,17 +110,14 @@ b1 = Button(
     highlightthickness = 0,
     command = file,
     relief = "flat")
-
 b1.place(
     x = 785, y = 219,
     width = 24,
     height = 22)
-
 canvas.create_text(
     215.0, 251.5,
     text = "For Filtered Data E-mail",
     fill = "#fcfcfc",
     font = ("MontserratRoman-SemiBold", int(24.0)))
-
 window.resizable(False, False)
 window.mainloop()
