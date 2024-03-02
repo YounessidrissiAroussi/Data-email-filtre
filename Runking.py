@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter import filedialog 
-import os
+import os , shutil
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
@@ -28,7 +28,7 @@ def filter_domain(file_path, folder_name, progress_window):
             domain = email[index+1:-4]
             filtered_data = filter_emails_by_domain(file_path, domain)
             create_folder = folder_name
-            os.makedirs(create_folder ,exist_ok='True')
+            os.makedirs(create_folder, exist_ok=True)
             append_emails_to_file(filtered_data, f"./{create_folder}/{domain}.txt")
             progress_var.set((i / total_lines) * 100)  # Update progress
             progress_window.update()  # Force update the GUI
@@ -36,7 +36,7 @@ def filter_domain(file_path, folder_name, progress_window):
 def Generate():
     if filename != "":
         folder_window = tk.Toplevel(window)
-        folder_window.geometry("300x150")
+        folder_window.geometry("200x100")
         folder_window.title("Folder Name")
         folder_window.iconbitmap("images/pngegg.ico")
         folder_window.configure(bg = "#282a49")
@@ -46,34 +46,64 @@ def Generate():
         
         folder_entry = Entry(folder_window,  bd = 0,bg = "#f1f5ff", highlightthickness = 0)
         folder_entry.pack(pady=5)
-       
+        
+        def cancel_create_folder():
+            res = tk.messagebox.askquestion('Cancel', 'Do you want to cancel?')
+            if res == 'yes':
+                progress_bar.stop()
+                folder_window.destroy()
+                
+                
         def start_processing():
             folder_name = folder_entry.get()
+            desktop = os.path.normpath(os.path.expanduser("~/Desktop"))
+            src = os.path.join(os.getcwd(), folder_name)
+
+            def cancel_processing():
+                res = tk.messagebox.askquestion('Cancel', 'Do you want to cancel processing ?')
+                if res == 'yes':
+                    progress_window.destroy()
+
             if folder_name == "":
                 tk.messagebox.showwarning("Warning", "Please enter a folder name.")
                 return
+            
             folder_window.destroy()
             progress_window = tk.Toplevel(window)
-            progress_window.geometry("300x100")
+            progress_window.geometry("300x150")
             progress_window.title("Progress")
             progress_window.iconbitmap("images/pngegg.ico")
             progress_window.configure(bg = "#282a49")
 
             progress_label = Label(progress_window, text="Processing...", bg="#282a49", fg="white")
             progress_label.pack(pady=10)
-
+            global progress_bar
             progress_bar = ttk.Progressbar(progress_window, mode='determinate', variable=progress_var)
             progress_bar.pack(pady=5)
+            
+            cancel_pro = Button(progress_window, text="Cancel", command=cancel_processing)
+            cancel_pro.pack(pady=5)
 
             progress_bar.start()
-            window.update()  # Force update the GUI
+            window.update()  
             filter_domain(filename, folder_name, progress_window)
             progress_bar.stop()
             progress_window.destroy()
+            # Move folder to desktop
+            shutil.move(src, desktop)
             tk.messagebox.showinfo('Return','Files are done')
         
         start_button = Button(folder_window, text="Create", command=start_processing)
-        start_button.pack(pady=5)
+        start_button.pack(side="left", padx=5, pady=5) 
+
+        cancel_button = Button(folder_window, text="Cancel", command=cancel_create_folder)
+        cancel_button.pack(side="left", padx=5, pady=5)
+
+       
+        folder_window.update_idletasks()  
+        x = (folder_window.winfo_width() - start_button.winfo_reqwidth() - cancel_button.winfo_reqwidth()) // 2
+        start_button.pack_configure(anchor='n', padx=(x, 5)) 
+        cancel_button.pack_configure(anchor='n', padx=(5, x))
 
 window = Tk()
 window.geometry("862x519")
@@ -141,6 +171,7 @@ def path_filename():
         width = 321.0,
         height = 59)
     entry0.insert(0,filename)
+    
         
 img1 = PhotoImage(file = f"images/img1.png")
 b1 = Button(
